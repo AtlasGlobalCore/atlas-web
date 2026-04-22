@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Atlas Global Core — Prisma Schema v3 (SQLite Adaptation)
+// MVP: CRM + NeXFlowX Routing Engine + Ledger Reconciliation
+// ═══════════════════════════════════════════════════════════════
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  role          String   @default("viewer")
+  locale        String   @default("en")
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  merchantKyb   MerchantKyb?
+  transactions  Transaction[]
+  storefronts   Storefront[]
+  merchants     Merchant[]
+  customers     Customer[]
+  onboarding    OnboardingProgress?
+
+  @@index([email])
+}
+
+// ─── Merchant v3 (with Tier System) ────────────────────────
+
+model Merchant {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  slug            String   @unique
+  country         String   @default("FR")
+  region          String   @default("EU")
+  legalEntityId   String   @default("FR_EI_2013")
+  status          String   @default("pending")
+  tier            String   @default("bronze")
+  monthlyVolume   Float    @default(0)
+  chargebackRate  Float    @default(0)
+  approvalRate    Float    @default(0)
+  allowedMethods  String   @default("[]")
+  apiKeys         String   @default("{}")
+  webhookUrl      String?
+  maxRoutingRules Int      @default(3)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+  routingRules    RoutingRule[]
+  tiers           MerchantTier[]
+  ledgerEntries   LedgerEntry[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([region])
+  @@index([tier])
+  @@index([slug])
+}
+
+// ─── Tier Configuration ────────────────────────────────────
+
+model MerchantTier {
+  id              String   @id @default(cuid())
+  merchantId      String
+  tierLevel       String   @unique
+  minVolume       Float    @default(0)
+  feeDiscount     Float    @default(0)
+  routingPriority Int      @default(0)
+  maxRules        Int      @default(3)
+  features        String   @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  merchant        Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId])
+}
+
+// ─── Transaction v3 (with Routing Metadata) ────────────────
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String
+  merchantId      String?
+  merchantName    String
+  customerId      String?
+  amount          Float
+  currency        String   @default("EUR")
+  status          String   @default("completed")
+  gateway         String
+  region          String   @default("EU")
+  gatewayStatus   String   @default("active")
+  routingEngine   String   @default("NeXFlowX")
+  routingLevel    String   @default("tier")
+  confidence      Float    @default(0)
+  entityId        String?
+  entityName      String?
+  fallbackGateway String?
+  feeAmount       Float?
+  feeRate         Float?
+  netAmount       Float?
+  reference       String   @unique
+  metadata        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant        Merchant? @relation(fields: [merchantId], references: [id])
+  ledgerEntries   LedgerEntry[]
+  customer        Customer? @relation("CustomerTransactions", fields: [customerId], references: [id])
+
+  @@index([userId])
+  @@index([merchantId])
+  @@index([customerId])
+  @@index([currency])
+  @@index([region])
+  @@index([status])
+  @@index([gateway])
+  @@index([routingLevel])
+  @@index([createdAt])
+  @@index([merchantName])
+}
+
+// ─── Routing Rules ─────────────────────────────────────────
+
+model RoutingRule {
+  id              String    @id @default(cuid())
+  merchantId      String
+  name            String
+  priority        Int       @default(0)
+  level           String    @default("tier")
+  conditions      String    @default("{}")
+  gateway         String
+  fallbackGateway String
+  enabled         Boolean   @default(true)
+  hitCount        Int       @default(0)
+  successCount    Int       @default(0)
+  failCount       Int       @default(0)
+  lastHitAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId])
+  @@index([level])
+  @@index([priority])
+  @@index([enabled])
+}
+
+// ─── Customer (CRM) ────────────────────────────────────────
+
+model Customer {
+  id            String   @id @default(cuid())
+  userId        String
+  merchantId    String?
+  email         String
+  name          String?
+  phone         String?
+  country       String?
+  company       String?
+  tags          String   @default("[]")
+  metadata      String   @default("{}")
+  totalSpent    Float    @default(0)
+  txCount       Int      @default(0)
+  avgOrderValue Float    @default(0)
+  ltv           Float    @default(0)
+  churnRisk     Float    @default(0)
+  firstSeenAt   DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[] @relation("CustomerTransactions")
+
+  @@index([userId])
+  @@index([merchantId])
+  @@index([email])
+  @@index([ltv])
+  @@index([churnRisk])
+}
+
+// ─── Ledger Entry (Reconciliation) ─────────────────────────
+
+model LedgerEntry {
+  id              String    @id @default(cuid())
+  transactionId   String
+  merchantId      String?
+  type            String    @default("payment")
+  amount          Float
+  currency        String    @default("EUR")
+  status          String    @default("pending")
+  gateway         String
+  gatewayRef      String?
+  entityId        String?
+  description     String?
+  settledAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  merchant        Merchant? @relation(fields: [merchantId], references: [id])
+
+  @@index([transactionId])
+  @@index([merchantId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── Onboarding Progress ───────────────────────────────────
+
+model OnboardingProgress {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  currentStep       String   @default("email_verification")
+  completedSteps    String   @default("[]")
+  kybSubmitted      Boolean  @default(false)
+  kybApproved       Boolean  @default(false)
+  bankConnected     Boolean  @default(false)
+  apiKeysGenerated  Boolean  @default(false)
+  storefrontCreated Boolean  @default(false)
+  firstTransaction  Boolean  @default(false)
+  progressPercent   Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([currentStep])
+}
+
+// ─── Storefront ────────────────────────────────────────────
+
+model Storefront {
+  id              String    @id @default(cuid())
+  userId          String
+  name            String
+  slug            String    @unique
+  products        String    @default("{}")
+  checkoutConfig  String    @default("{}")
+  theme           String    @default("dark")
+  complianceText  String    @default("Powered by Atlas Global Core. Transactions processed by the merchant. Atlas operates solely as a Technical Service Provider.")
+  jurisdiction    String    @default("FR")
+  status          String    @default("draft")
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([slug])
+  @@index([jurisdiction])
+}
+
+// ─── KYB (Know Your Business) ──────────────────────────────
+
+model MerchantKyb {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  companyName        String
+  registrationNumber String
+  taxId              String?
+  directorName       String
+  directorId         String
+  country            String    @default("FR")
+  jurisdiction       String    @default("FR")
+  capitalSocial      String?
+  status             String    @default("pending")
+  submittedAt        DateTime  @default(now())
+  reviewedAt         DateTime?
+  reviewNotes        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([jurisdiction])
+  @@index([status])
+}
