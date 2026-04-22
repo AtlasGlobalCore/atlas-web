@@ -5,9 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 const siteUrl = "https://atlasglobalcore.com";
 
 export const metadata: Metadata = {
-  title: "Atlas Global Core | Commerce Operating System",
+  title: "Atlas Global Core | Context-Aware Orchestration Layer for the Agentic Economy",
   description:
-    "High-availability B2B infrastructure. CRM, SaaS Marketplaces, and Payment Orchestration fused into an indestructible core. Payment routing via NeXFlowX across EU, UK, and BR.",
+    "The Context-Aware Orchestration Layer for the Global Agentic Economy. AI-driven liquidity routing, real-time dynamic compliance, and seamless B2B settlement across Fiat and Crypto networks.",
   keywords: [
     "Atlas Global Core",
     "Payment Orchestration",
@@ -15,12 +15,13 @@ export const metadata: Metadata = {
     "CRM",
     "NeXFlowX",
     "Commerce OS",
-    "Payment Routing",
-    "SaaS Marketplace",
-    "Multi-Region Payments",
+    "Agentic Economy",
+    "AI Orchestration",
+    "Fiat Crypto Settlement",
+    "Viva.com",
+    "Onramp.money",
+    "GPU Reselling",
     "Stripe",
-    "Adyen",
-    "Stark Bank",
     "TSP",
     "Technical Service Provider",
   ],
@@ -56,23 +57,23 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "Atlas Global Core",
-    title: "Atlas Global Core | Commerce Operating System",
+    title: "Atlas Global Core | Context-Aware Orchestration Layer",
     description:
-      "High-availability B2B infrastructure. CRM, SaaS Marketplaces, and Payment Orchestration fused into an indestructible core.",
+      "The Context-Aware Orchestration Layer for the Global Agentic Economy. AI-driven liquidity routing and B2B settlement across Fiat and Crypto networks.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Atlas Global Core — Commerce Operating System",
+        alt: "Atlas Global Core — Context-Aware Orchestration Layer",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Atlas Global Core | Commerce Operating System",
+    title: "Atlas Global Core | Context-Aware Orchestration Layer",
     description:
-      "High-availability B2B infrastructure. CRM, SaaS Marketplaces, and Payment Orchestration fused into an indestructible core.",
+      "The Context-Aware Orchestration Layer for the Global Agentic Economy. AI-driven liquidity routing and B2B settlement.",
     images: ["/og-image.png"],
   },
   category: "technology",
