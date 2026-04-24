@@ -39,7 +39,13 @@ export function Navbar() {
   }, []);
 
   const handleNav = (page: Page) => {
-    if ((page === "command" || page === "studio" || page === "wallet") && !kybCompleted) {
+    // wallet page shows its own login gate (DashboardShell → LoginPage) — no kyb guard needed
+    if (page === "wallet") {
+      setPage("wallet");
+      return;
+    }
+    // command & studio still require KYB completion
+    if ((page === "command" || page === "studio") && !kybCompleted) {
       setPage("command");
     } else {
       setPage(page);
