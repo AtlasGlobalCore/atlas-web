@@ -10,7 +10,7 @@ import { StudioBuilder } from '@/components/atlas/studio-builder'
 import { LegalHub } from '@/components/atlas/legal-hub'
 import { PricingPage } from '@/components/atlas/pricing-page'
 import { ServicesPage } from '@/components/atlas/services-page'
-import { DashboardShell } from '@/components/wallet/dashboard-shell'
+import DashboardShell from '@/components/wallet/dashboard-shell'
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
