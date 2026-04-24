@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Page = 'landing' | 'command' | 'studio' | 'legal' | 'prices' | 'services'
+export type Page = 'landing' | 'command' | 'studio' | 'legal' | 'prices' | 'services' | 'wallet'
 export type LegalTab = 'structure' | 'terms-of-service' | 'privacy-policy' | 'compliance-manifesto' | 'refund-policy'
 export type Locale = 'en' | 'fr' | 'pt-PT' | 'pt-BR'
 

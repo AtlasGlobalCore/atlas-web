@@ -16,7 +16,7 @@ const localeLabels: Record<Locale, string> = {
 const localeOptions: Locale[] = ["en", "fr", "pt-PT", "pt-BR"];
 
 const navItems: { label: string; icon: React.ElementType; page: Page }[] = [
-  { label: "COMMAND", icon: Terminal, page: "command" },
+  { label: "ATLASWALLET", icon: Terminal, page: "wallet" },
   { label: "STUDIO", icon: Layout, page: "studio" },
   { label: "PRICING", icon: CreditCard, page: "prices" },
   { label: "SERVICES", icon: Cpu, page: "services" },
@@ -39,7 +39,7 @@ export function Navbar() {
   }, []);
 
   const handleNav = (page: Page) => {
-    if ((page === "command" || page === "studio") && !kybCompleted) {
+    if ((page === "command" || page === "studio" || page === "wallet") && !kybCompleted) {
       setPage("command");
     } else {
       setPage(page);
