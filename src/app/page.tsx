@@ -6,7 +6,7 @@ import { Navbar } from '@/components/atlas/navbar'
 import { Footer } from '@/components/atlas/footer'
 import { LandingPage } from '@/components/atlas/landing-page'
 import { CommandHub } from '@/components/atlas/command-hub'
-import { StudioBuilder } from '@/components/atlas/studio-builder'
+import { ExchangePage } from '@/components/atlas/exchange-page'
 import { LegalHub } from '@/components/atlas/legal-hub'
 import { PricingPage } from '@/components/atlas/pricing-page'
 import { ServicesPage } from '@/components/atlas/services-page'
@@ -42,7 +42,7 @@ export default function Home() {
           >
             {currentPage === 'landing' && <LandingPage />}
             {currentPage === 'command' && <CommandHub />}
-            {currentPage === 'studio' && <StudioBuilder />}
+            {currentPage === 'studio' && <ExchangePage />}
             {currentPage === 'legal' && <LegalHub />}
             {currentPage === 'prices' && <PricingPage />}
             {currentPage === 'services' && <ServicesPage />}

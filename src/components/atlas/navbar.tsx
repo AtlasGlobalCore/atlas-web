@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Terminal, Layout, Scale, Shield, Circle, User, Globe, CreditCard, Cpu } from "lucide-react";
+import { Terminal, BarChart3, Scale, Shield, Circle, User, Globe, CreditCard, Cpu } from "lucide-react";
 import { useAtlasStore } from "@/lib/store";
 import type { Page, Locale } from "@/lib/store";
 
@@ -17,7 +17,7 @@ const localeOptions: Locale[] = ["en", "fr", "pt-PT", "pt-BR"];
 
 const navItems: { label: string; icon: React.ElementType; page: Page }[] = [
   { label: "ATLASWALLET", icon: Terminal, page: "wallet" },
-  { label: "STUDIO", icon: Layout, page: "studio" },
+  { label: "EXCHANGE", icon: BarChart3, page: "studio" },
   { label: "PRICING", icon: CreditCard, page: "prices" },
   { label: "SERVICES", icon: Cpu, page: "services" },
   { label: "LEGAL", icon: Scale, page: "legal" },

@@ -1,13 +1,13 @@
 /**
- * Atlas Global Payments — API Client V2.00 (NeXFlowX Engine)
+ * Atlas Global Payments — API Client V2.10 (NeXFlowX Engine)
  * BaaS (Banking as a Service) — Settlement Engine
  *
- * DEPRECATED: Backend no longer handles auth — use Supabase Auth
- * The login/logout endpoints have been removed from this client.
- * Authentication is now handled via Supabase (see auth-store.ts).
- * The auth.me() endpoint is retained — it validates the Supabase JWT on the backend.
+ * Auth is handled via Supabase. The API client automatically retrieves
+ * the access token from the Supabase session (with localStorage fallback).
+ * The auth.me() endpoint validates the Supabase JWT on the backend.
  */
 
+import { supabase } from '../supabase';
 import type {
   AuthMeResponse, WalletsResponse,
   SwapRequest, SwapResponse, PayoutRequest, PayoutResponse,
@@ -36,8 +36,24 @@ export class NexFlowXAPIError extends Error {
   }
 }
 
+/**
+ * Retrieve the auth token — Supabase session first, localStorage fallback.
+ */
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) return session.access_token;
+  } catch {
+    /* Supabase not available or not configured — fall through */
+  }
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('nexflowx_token');
+  }
+  return null;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('nexflowx_token') : null;
+  const token = await getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -59,7 +75,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
  * Only `me()` remains to validate the Supabase JWT on the backend.
  */
 export const auth = {
-  // DEPRECATED: Backend no longer handles auth — use Supabase Auth
   async me(): Promise<AuthMeResponse> { return request('/auth/me'); },
 };
 
@@ -92,7 +107,7 @@ export const payout = {
 
 export const deposits = {
   async create(data: DepositRequest): Promise<DepositResponse> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('nexflowx_token') : null;
+    const token = await getAuthToken();
     return request('/deposits', {
       method: 'POST',
       headers: { ...(token ? { 'x-api-key': token } : {}) },

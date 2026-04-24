@@ -21,11 +21,11 @@ if (DEV_BYPASS_ENABLED) {
   );
 }
 
-function createBypassUser(email: string): AuthUser {
+function createBypassUser(identifier: string): AuthUser {
   return {
     id: 'dev-bypass-001',
-    username: email.split('@')[0] || email,
-    email: email.includes('@') ? email : `${email}@dev.local`,
+    username: identifier.includes('@') ? identifier.split('@')[0] : identifier,
+    email: identifier.includes('@') ? identifier : `${identifier}@dev.local`,
     role: 'admin' as UserRole,
     organization_id: 'org-dev-bypass',
     created_at: new Date().toISOString(),
@@ -43,7 +43,7 @@ interface AuthStore {
   user: AuthUser | null;
   loginError: string | null;
   registerError: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string) => Promise<boolean>;
   register: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   validateToken: () => Promise<void>;
@@ -62,12 +62,16 @@ export const useAuthStore = create<AuthStore>()(
 
       clearErrors: () => set({ loginError: null, registerError: null }),
 
-      login: async (email: string, password: string) => {
+      /**
+       * Login with identifier (email or username) + password.
+       * Uses Supabase Auth's signInWithPassword (requires a valid email).
+       */
+      login: async (identifier: string, password: string) => {
         set({ isLoading: true, loginError: null, registerError: null });
 
         /* ── DEV BYPASS (env-controlled, never in production) ── */
         if (DEV_BYPASS_ENABLED) {
-          const bypassUser = createBypassUser(email);
+          const bypassUser = createBypassUser(identifier);
           if (typeof window !== 'undefined') {
             localStorage.setItem('nexflowx_token', 'dev-token-bypass');
             localStorage.setItem('nexflowx_refresh', 'dev-refresh-bypass');
@@ -80,7 +84,12 @@ export const useAuthStore = create<AuthStore>()(
 
         try {
           // Authenticate via Supabase Auth
-          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          // Supabase signInWithPassword requires the email field, but we accept
+          // any identifier — the user sees "Identificador" in the UI.
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: identifier,
+            password,
+          });
 
           if (error) {
             const message = error.message || 'Credenciais inválidas. Acesso não autorizado.';
@@ -114,6 +123,9 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
+      /**
+       * Register with email + password via Supabase Auth.
+       */
       register: async (email: string, password: string) => {
         set({ isLoading: true, registerError: null, loginError: null });
 

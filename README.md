@@ -5,7 +5,7 @@
 **The Context-Aware Orchestration Layer for the Global Agentic Economy**
 
 <p>
-  <img src="public/logo-dark.png" alt="Atlas Global Core" width="280" />
+  <img src="public/logo-atlas-core.png" alt="Atlas Global Core" width="280" />
 </p>
 
 AI-driven liquidity routing · Real-time dynamic compliance · Seamless B2B settlement across Fiat & Crypto
@@ -24,13 +24,14 @@ AI-driven liquidity routing · Real-time dynamic compliance · Seamless B2B sett
 - [API Response Format](#api-response-format)
 - [Project Structure](#project-structure)
 - [Landing Page](#landing-page)
+- [Exchange Page](#exchange-page)
 - [AtlasWallet Dashboard](#atlaswallet-dashboard)
 - [NeXFlowX Routing Engine](#nexflowx-routing-engine-v30)
 - [State Management](#state-management)
 - [API Client & Contracts](#api-client--contracts)
 - [React Query Hooks](#react-query-hooks)
-- [Local API Routes](#local-api-routes)
-- [Database Schema](#database-schema-prisma--sqlite)
+- [Deprecated Local API Routes](#deprecated-local-api-routes)
+- [Database Schema (Local Dev Only)](#database-schema-local-dev-only--prisma--sqlite)
 - [Environment Variables](#environment-variables)
 - [CORS Configuration](#cors-configuration)
 - [Admin Access Control](#admin-access-control)
@@ -55,7 +56,7 @@ The platform enables merchants and enterprises to:
 
 | Property | Value |
 |----------|-------|
-| **Domain** | `atlasglobalcore.com` |
+| **Domain** | `atlasglobal.digital` |
 | **API Backend** | `https://api.atlasglobal.digital/api/v1` |
 | **Operator** | Sergio Monteiro (EI) — SIREN 790 155 006 |
 | **Holding** | IAHUB360 LTD — UK Reg. #16568194 |
@@ -67,49 +68,52 @@ The platform enables merchants and enterprises to:
 ## System Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                       CLIENT (Bun + Next.js 16)                  │
-│                                                                   │
-│  ┌────────────┐  ┌──────────────┐  ┌────────────────────────┐   │
-│  │  Zustand    │  │  TanStack    │  │  Supabase Auth         │   │
-│  │  (3 stores) │  │  React Query │  │  (signUp / signIn)     │   │
-│  │  - store    │  │  (14 hooks)  │  │  → JWT → localStorage  │   │
-│  │  - auth     │  │              │  └───────────┬────────────┘   │
-│  │  - dashboard│  └──────┬───────┘              │                 │
-│  └────────────┘         │                Bearer token            │
-│                     query key              (nexflowx_token)       │
-│                          │                       │                │
-│  ┌───────────────────────▼───────────────────────▼───────────┐   │
-│  │              API Client V2.00                              │   │
-│  │              api.atlasglobal.digital/api/v1                │   │
-│  │              (CORS-enabled, typed, error-boundary)         │   │
-│  └───────────────────────┬────────────────────────────────────┘   │
-└──────────────────────────┼────────────────────────────────────────┘
-                           │ HTTPS / REST / JSON
-┌──────────────────────────▼────────────────────────────────────────┐
-│                   BACKEND (Express.js — Hosted Separately)        │
-│                                                                   │
-│  ┌─────────────┐   ┌──────────────┐   ┌────────────────────┐    │
-│  │  JWKS Auth  │→ │  Business     │→ │  PostgreSQL         │    │
-│  │  Middleware  │   │  Logic       │   │  (Production DB)   │    │
-│  │  (Supabase  │   │  (Wallets,   │   │                    │    │
-│  │   JWT       │   │   Routing,   │   │                    │    │
-│  │   verify)   │   │   Settlement)│   │                    │    │
-│  └─────────────┘   └──────────────┘   └────────────────────┘    │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                        CLIENT (Bun + Next.js 16)                     │
+│                                                                      │
+│  ┌────────────┐  ┌──────────────┐  ┌────────────────────────────┐   │
+│  │  Zustand    │  │  TanStack    │  │  Supabase Auth              │   │
+│  │  (3 stores) │  │  React Query │  │  (signUp / signIn)          │   │
+│  │  - store    │  │  (14 hooks)  │  │  → getSession() → JWT       │   │
+│  │  - auth     │  │              │  └──────────┬─────────────────┘   │
+│  │  - dashboard│  └──────┬───────┘             │                      │
+│  └────────────┘         │             ┌───────┴───────────────┐      │
+│                       query key      │  Supabase Session     │      │
+│                           │          │  Interceptor          │      │
+│                           │          │  (auto-refreshes JWT) │      │
+│  ┌────────────────────────▼──────────▼───────────────────────┐      │
+│  │              API Client V2.10                             │      │
+│  │              api.atlasglobal.digital/api/v1                │      │
+│  │              (CORS-enabled, typed, error-boundary)         │      │
+│  │                                                             │      │
+│  │  getAuthToken() → supabase.getSession() → Bearer token    │      │
+│  └────────────────────────┬──────────────────────────────────┘      │
+└───────────────────────────┼──────────────────────────────────────────┘
+                            │ HTTPS / REST / JSON
+┌───────────────────────────▼──────────────────────────────────────────┐
+│                    BACKEND (Express.js — Hosted Separately)          │
+│                                                                      │
+│  ┌─────────────┐   ┌──────────────┐   ┌────────────────────┐       │
+│  │  JWKS Auth  │→ │  Business     │→ │  PostgreSQL         │       │
+│  │  Middleware  │   │  Logic       │   │  (Production DB)   │       │
+│  │  (Supabase  │   │  (Wallets,   │   │                    │       │
+│  │   JWT       │   │   Routing,   │   │                    │       │
+│  │   verify)   │   │   Settlement)│   │                    │       │
+│  └─────────────┘   └──────────────┘   └────────────────────┘       │
+└──────────────────────────────────────────────────────────────────────┘
 
-              LOCAL DEMO ROUTES (Next.js API Routes):
-┌──────────────────────────────────────────────────────────────────┐
-│  /api/v2/payments/process  ← NeXFlowX v3.0 Engine (simulated)  │
-│  /api/v2/merchants         ← Tier system with mock fallback     │
-│  /api/v2/customers         ← CRM with mock fallback             │
-│  /api/v2/analytics         ← Dashboard KPIs (mock data)        │
-│  /api/kyb                  ← KYB verification CRUD              │
-│  /api/transactions         ← Transaction list + routing         │
-│  /api/storefronts          ← E-commerce store CRUD              │
-│                            ↓                                     │
-│              Prisma → SQLite (db/custom.db)                      │
-└──────────────────────────────────────────────────────────────────┘
+              DEPRECATED LOCAL ROUTES (kept as stubs, NOT used):
+┌──────────────────────────────────────────────────────────────────────┐
+│  /api/v2/payments/process  ← STUB (returns { deprecated: true })  │
+│  /api/v2/merchants         ← STUB                                  │
+│  /api/v2/customers         ← STUB                                  │
+│  /api/v2/analytics         ← STUB                                  │
+│  /api/kyb                  ← STUB                                  │
+│  /api/transactions         ← STUB                                  │
+│  /api/storefronts          ← STUB                                  │
+│                                                                     │
+│  ONLY REMAINING: /api (health check)                               │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Technology Stack
@@ -124,8 +128,9 @@ The platform enables merchants and enterprises to:
 | **Client State** | Zustand | 5.x | 3 stores (auth, navigation, dashboard) |
 | **Server State** | TanStack React Query | 5.x | 14 hooks, 30s staleTime |
 | **Data Tables** | TanStack React Table | 8.x | Sortable, filterable, paginated |
-| **Authentication** | Supabase Auth | 2.x | JWKS asymmetric, `signUp` / `signInWithPassword` |
-| **Charts** | Recharts | 2.x | Financial charts, sparklines, KPIs |
+| **Authentication** | Supabase Auth | 2.x | Real auth: `signUp` / `signInWithPassword` |
+| **Charts** | Recharts | 2.x | Financial charts, exchange trading charts, sparklines, KPIs |
+| **Market Data** | CoinGecko API | Free | Real-time crypto prices (8 coins, 30s refetch) |
 | **Maps** | react-simple-maps | 3.x | Network topology visualization |
 | **UI Components** | shadcn/ui | New York | 44 pre-built components |
 | **Icons** | Lucide React | 0.525+ | Consistent icon system |
@@ -137,7 +142,7 @@ The platform enables merchants and enterprises to:
 | **Toasts** | Sonner | 2.x | Toast notification system |
 | **Image Processing** | Sharp | 0.34+ | Server-side image optimization |
 | **Runtime** | Bun | Latest | Package manager + runtime |
-| **Database (local)** | SQLite via Prisma | 6.11+ | Dev/demo data only |
+| **Database (local)** | SQLite via Prisma | 6.11+ | Local dev only — NOT used in production |
 
 ---
 
@@ -204,16 +209,19 @@ The platform enables merchants and enterprises to:
 
 > **The frontend NEVER connects directly to the production database.**
 
-- All business logic, data creation, and transactions are handled exclusively by the backend API
+- All business logic, data creation, and transactions are handled exclusively by the backend API at `https://api.atlasglobal.digital/api/v1`
 - Next.js is responsible for **three things only**:
   1. **UI rendering** — Components, layouts, animations
   2. **State management** — Zustand stores for auth, dashboard, navigation
   3. **Data fetching** — React Query hooks that call the backend API
-- Local API routes (`/api/v2/*`) exist for **demo purposes only** with SQLite + mock data fallbacks
+- The 7 local API routes that previously existed have been **deprecated** and are now stubs — ALL data flows through the backend API exclusively
+- SQLite/Prisma is retained for local development convenience only
 
 ---
 
-## Authentication Flow (Supabase Auth)
+## Authentication Flow (Supabase Auth — Real)
+
+The auth system now uses **real Supabase Auth** (previously a no-op shim). Login and registration flows communicate directly with the Supabase backend, and the API client automatically attaches the Supabase JWT via a session interceptor.
 
 ```
 ┌─────────┐    signUp()     ┌───────────┐   Webhook    ┌─────────┐
@@ -226,25 +234,65 @@ The platform enables merchants and enterprises to:
      │                          │                          │
      │◀─────── access_token ────│                          │
      │                          │                          │
-     │    GET /users/me + Authorization: Bearer <token>     │
-     │────────────────────────────────────────────────────▶│
-     │◀────────────────── { data: { id, role, ... } } ─────│
+     │  getAuthToken() via      │                          │
+     │  supabase.getSession()   │                          │
+     │         │                │                          │
+     │         ▼                │                          │
+     │  API Client interceptor  │                          │
+     │  Authorization: Bearer   │                          │
+     │         │                │                          │
+     │    GET /auth/me ─────────────────────────────────▶  │
+     │◀────────────────── { data: { id, role, ... } } ────│
 ```
+
+### Login vs Register Flow
+
+| Step | Login | Register |
+|------|-------|----------|
+| **UI Fields** | Identifier (ID) + Password | ID + Email + Password + Confirm Password |
+| **Supabase Call** | `signInWithPassword({ email, password })` | `signUp({ email, password })` |
+| **Email Confirmation** | N/A (already verified) | May require email confirmation before first login |
+| **Token Source** | `data.session.access_token` | `data.session.access_token` (if auto-confirmed) |
+| **Token Storage** | `localStorage.nexflowx_token` | `localStorage.nexflowx_token` |
+| **Backend Validation** | `GET /auth/me` → user profile | `GET /auth/me` → user profile |
 
 ### Implementation Details
 
 | Step | Action | Direction | Source File |
 |------|--------|-----------|-------------|
-| **REGISTER** | `supabase.auth.signUp()` | UI → Supabase | `auth-store.ts` |
+| **REGISTER** | `supabase.auth.signUp({ email, password })` | UI → Supabase | `auth-store.ts` |
 | | Backend auto-creates user record | Supabase → Backend (Webhook) | — |
-| **LOGIN** | `supabase.auth.signInWithPassword()` | UI → Supabase | `auth-store.ts` |
+| | If email confirmation required → UI shows "check your email" | — | `login-page.tsx` |
+| **LOGIN** | `supabase.auth.signInWithPassword({ email, password })` | UI → Supabase | `auth-store.ts` |
 | | Returns `access_token` (JWT) | Supabase → UI | — |
 | | Token stored in `localStorage.nexflowx_token` | Client-side | `auth-store.ts` |
-| **API CALL** | `Authorization: Bearer <token>` | UI → Backend | `api/client.ts` |
+| **API CALL** | `Authorization: Bearer <token>` (auto-attached by interceptor) | UI → Backend | `api/client.ts` |
 | | Backend validates JWKS signature | Backend middleware | — |
-| **SESSION** | `supabase.auth.getSession()` | UI (on mount) | `auth-store.ts` |
+| **SESSION** | `supabase.auth.getSession()` → refresh stored token | UI (on mount) | `auth-store.ts` |
 | | Auto-refresh token | Supabase (transparent) | — |
+| **TOKEN INTERCEPTOR** | `getAuthToken()` → `supabase.getSession()` → Bearer header | Client-side | `api/client.ts` |
 | **LOGOUT** | `supabase.auth.signOut()` + `clearAuthTokens()` | UI → Supabase | `auth-store.ts` |
+
+### API Client Session Interceptor
+
+The API client (`src/lib/api/client.ts`) no longer reads tokens directly from localStorage. Instead, it uses a **Supabase session interceptor** that calls `supabase.auth.getSession()` on every request, with a localStorage fallback:
+
+```typescript
+// src/lib/api/client.ts
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) return session.access_token;
+  } catch {
+    /* Supabase not available — fall through */
+  }
+  // Fallback: localStorage (for dev bypass or edge cases)
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('nexflowx_token');
+  }
+  return null;
+}
+```
 
 ### Auth Store (Zustand + Persist)
 
@@ -257,7 +305,7 @@ interface AuthState {
   user: AuthUser | null
   loginError: string | null
   registerError: string | null
-  login(email: string, password: string): Promise<void>
+  login(identifier: string, password: string): Promise<boolean>
   register(email: string, password: string): Promise<boolean>
   logout(): Promise<void>
   validateToken(): Promise<void>
@@ -282,7 +330,7 @@ isCustomer(user: AuthUser): boolean   // role === 'customer'
 getUserRole(user: AuthUser): string   // Uppercase role label
 ```
 
-> **Deprecated:** Do NOT POST directly to `/auth/login` or `/auth/register`. All auth flows go through Supabase client SDK.
+> **Note:** All auth flows go through Supabase client SDK. There are no local `/auth/login` or `/auth/register` API routes.
 
 ---
 
@@ -331,51 +379,54 @@ class NexFlowXAPIError extends Error {
 ```
 atlas-web/
 ├── public/
+│   ├── logo-atlas-core.png        # Official logo (site-wide + favicon)
 │   ├── logo-dark.png              # Dark mode logo
 │   ├── logo-light.png             # Light mode logo
 │   ├── logo.svg                   # SVG logo
 │   └── robots.txt                 # Search engine directives
 │
 ├── prisma/
-│   └── schema.prisma              # Database schema (10 models, SQLite)
+│   └── schema.prisma              # Database schema (10 models, SQLite — local dev only)
 │
 ├── db/
-│   └── custom.db                  # SQLite database file (local demo)
+│   └── custom.db                  # SQLite database file (local dev only)
 │
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx               # Main SPA router (7 pages, AnimatePresence)
-│   │   ├── layout.tsx             # Root layout (metadata, fonts, providers)
+│   │   ├── layout.tsx             # Root layout (metadata for atlasglobal.digital, fonts, providers)
 │   │   ├── globals.css            # Complete theme system (377 lines)
 │   │   └── api/
-│   │       ├── route.ts           # Health check
-│   │       ├── kyb/route.ts       # KYB verification CRUD
-│   │       ├── transactions/route.ts # Transactions with NeXFlowX routing
-│   │       ├── storefronts/route.ts   # Store management
+│   │       ├── route.ts           # Health check (ONLY remaining active route)
+│   │       ├── kyb/route.ts       # [DEPRECATED STUB]
+│   │       ├── transactions/route.ts # [DEPRECATED STUB]
+│   │       ├── storefronts/route.ts   # [DEPRECATED STUB]
 │   │       └── v2/
-│   │           ├── analytics/route.ts     # Dashboard analytics (mock)
-│   │           ├── customers/route.ts     # CRM data (mock)
-│   │           ├── merchants/route.ts     # Merchant tiers (mock)
-│   │           └── payments/process/route.ts # Payment processing + routing
+│   │           ├── analytics/route.ts     # [DEPRECATED STUB]
+│   │           ├── customers/route.ts     # [DEPRECATED STUB]
+│   │           ├── merchants/route.ts     # [DEPRECATED STUB]
+│   │           └── payments/process/route.ts # [DEPRECATED STUB]
 │   │
 │   ├── components/
 │   │   ├── providers.tsx          # QueryClientProvider (staleTime 30s)
 │   │   │
-│   │   ├── atlas/                 # ─── Landing & CMS Pages (10 files) ───
+│   │   ├── atlas/                 # ─── Landing & CMS Pages (11 files) ───
 │   │   │   ├── landing-page.tsx       # Full landing (Hero, AI Engine, Marketplace)
+│   │   │   ├── exchange-page.tsx      # Crypto Exchange (CoinGecko + Recharts)
 │   │   │   ├── living-background.tsx  # Manus.im particle system background
 │   │   │   ├── nexflowx-companion.tsx # AI Orb floating assistant
 │   │   │   ├── navbar.tsx             # Top navigation (5 items, locale switcher)
-│   │   │   ├── footer.tsx             # Legal footer (SIREN, compliance, contact)
+│   │   │   ├── footer.tsx             # Unified legal footer (all pages)
 │   │   │   ├── command-hub.tsx        # Unified command/knowledge hub
 │   │   │   ├── legal-hub.tsx          # Legal documents (5 tabs)
 │   │   │   ├── services-page.tsx      # Detailed services page
 │   │   │   ├── pricing-page.tsx       # Pricing tiers
-│   │   │   └── studio-builder.tsx     # Atlas Studio visual builder
+│   │   │   └── studio-builder.tsx     # [Legacy] Atlas Studio visual builder
 │   │   │
-│   │   ├── wallet/                # ─── AtlasWallet Dashboard (22 files) ───
+│   │   ├── wallet/                # ─── AtlasWallet Dashboard (23 files) ───
 │   │   │   ├── dashboard-shell.tsx       # Auth guard + section router
-│   │   │   ├── login-page.tsx            # Supabase login/register + canvas BG
+│   │   │   ├── login-page.tsx            # Real Supabase login/register
+│   │   │   ├── login-grid-background.tsx # Animated grid + neon beams login BG
 │   │   │   ├── sidebar.tsx               # Desktop + mobile sidebar
 │   │   │   ├── header.tsx                # Top bar (clock, search, role badge)
 │   │   │   ├── dashboard-overview.tsx    # KPIs + world map + activity feed
@@ -408,14 +459,14 @@ atlas-web/
 │   │
 │   ├── lib/
 │   │   ├── api/
-│   │   │   ├── client.ts          # API Client V2.00 (Bearer auth, CORS)
+│   │   │   ├── client.ts          # API Client V2.10 (Supabase session interceptor)
 │   │   │   └── contracts.ts       # TypeScript contracts + mappers
-│   │   ├── auth-store.ts          # Zustand auth (Supabase + dev bypass)
+│   │   ├── auth-store.ts          # Zustand auth (real Supabase + dev bypass)
 │   │   ├── dashboard-store.ts     # Dashboard section navigation
 │   │   ├── store.ts               # Global page navigation (SPA)
-│   │   ├── supabase.ts            # Supabase client config
+│   │   ├── supabase.ts            # Real Supabase client config (with fallback shim)
 │   │   ├── nexflowx.ts            # NeXFlowX v3.0 engine (608 lines)
-│   │   ├── db.ts                  # Prisma client (SQLite singleton)
+│   │   ├── db.ts                  # Prisma client (SQLite singleton — local dev only)
 │   │   └── utils.ts               # cn() helper
 │   │
 │   └── i18n/
@@ -443,7 +494,7 @@ The landing page is a single-page application with 6 sections and a Manus.im-ins
 | 1 | **Hero** | "The Context-Aware Orchestration Layer for the Global Agentic Economy" — animated headline, subtitle, CTA buttons |
 | 2 | **NeXFlowX AI-Engine** | Visual flow: 4 Input Signals → Central Processing Node → 2 Routing Outputs (Viva.com / Onramp.money) |
 | 3 | **Private B2B Marketplace** | 3 categories: Compute Power (GPU), Agentic Workflows, Digital IP Assets |
-| 4 | **Core Modules** | 3 deep-dive cards: NeXFlowX Routing, Brain CRM, Atlas Studio |
+| 4 | **Core Modules** | 3 deep-dive cards: NeXFlowX Routing, Brain CRM, Atlas Exchange |
 | 5 | **Trust Bar** | Partner logos: Stripe, Viva.com, Onramp.money + Compliance: PCI-DSS, ISO 27001 |
 | 6 | **Stats** | 99.97% uptime · <50ms latency · 12M+ transactions · 47 countries |
 
@@ -469,10 +520,82 @@ The landing page is a single-page application with 6 sections and a Manus.im-ins
 | Label | Page Key | Component | KYB Required |
 |-------|----------|-----------|-------------|
 | **ATLASWALLET** | `wallet` | `DashboardShell` | No (shows login gate) |
-| **STUDIO** | `studio` | `StudioBuilder` | Yes |
+| **EXCHANGE** | `exchange` | `ExchangePage` | No |
 | **PRICING** | `prices` | `PricingPage` | No |
 | **SERVICES** | `services` | `ServicesPage` | No |
 | **LEGAL** | `legal` | `LegalHub` | No |
+
+### Unified Footer
+
+The `Footer` component (`src/components/atlas/footer.tsx`) is now rendered **across all pages** — landing, exchange, pricing, services, legal, and dashboard. A previous duplicate footer that existed inside `dashboard-shell.tsx` has been removed to avoid duplication.
+
+---
+
+## Exchange Page
+
+The Exchange page (`src/components/atlas/exchange-page.tsx`) replaces the legacy Studio Builder. It provides a full-featured crypto exchange interface with real-time market data.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Real-time CoinGecko API** | 8 coins (BTC, ETH, LTC, USDT, BNB, SOL, XRP, ADA) with 30s auto-refetch |
+| **Interactive Trading Chart** | Recharts `AreaChart` with gradient fill, tooltips, reference lines |
+| **Market Pair Dropdown** | 7 pairs: BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, XRP/USDT, ADA/USDT, LTC/USDT |
+| **Timeframe Selector** | 5 timeframes: 1H, 4H, 1D, 1W, 1M with variable volatility |
+| **Stat Banner** | Total Market Cap, BTC Dominance, 24H Avg Change, Active Markets |
+| **Market Ticker** | Side panel with all coins, prices, and 24H change |
+| **Onramp Placeholder** | "Em breve disponível" (Coming Soon) with payment method badges |
+| **Security Notice** | Data source disclosure + TSP disclaimer |
+
+### Market Data (CoinGecko Free API)
+
+The Exchange page uses the [CoinGecko Free API](https://www.coingecko.com/en/api) (`/api/v3/simple/price`) which is subject to rate limits:
+
+- **Free tier**: ~10-30 calls/minute
+- **Refetch interval**: 30 seconds (configurable in `refetchInterval`)
+- **Stale time**: 15 seconds
+- **No API key required** for basic usage
+
+> **Note:** If CoinGecko rate limits are hit, the page gracefully shows an error state and continues retrying.
+
+### Onramp Placeholder
+
+The onramp section displays payment method badges for upcoming fiat-to-crypto onramp integration:
+
+| Badge | Method | Status |
+|-------|--------|--------|
+| **G Pay** | Google Pay | Coming Soon |
+| **Apple Pay** | Apple Pay | Coming Soon |
+| **SEPA** | SEPA Transfer (EU) | Coming Soon |
+| **PIX** | PIX (Brazil) | Coming Soon |
+
+### Layout
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Header: Exchange · Global Crypto Markets · Real-time Data  │
+│  [Updated: HH:MM:SS]  [REFRESH]                            │
+├──────────────────────────────────────┬──────────────────────┤
+│  Stat Banner (4 metrics)             │                      │
+│                                      │   Market Ticker      │
+│  [Pair ▼] [1H ▼ 4H 1D 1W 1M]       │   ┌──────────────┐  │
+│                                      │   │ BTC  $65,000  │  │
+│  ┌────────────────────────────────┐  │   │ ETH  $3,200   │  │
+│  │                                │  │   │ SOL  $148     │  │
+│  │     Trading Chart              │  │   │ BNB  $580     │  │
+│  │     (AreaChart + Recharts)     │  │   │ XRP  $0.52    │  │
+│  │                                │  │   │ ADA  $0.38    │  │
+│  │                                │  │   │ LTC  $84      │  │
+│  └────────────────────────────────┘  │   └──────────────┘  │
+│                                      │                      │
+│  ┌────────────────────────────────┐  │   Security Notice    │
+│  │  Onramp Placeholder           │  │                      │
+│  │  "Em breve disponível"        │  │                      │
+│  │  [G Pay] [Apple] [SEPA] [PIX] │  │                      │
+│  └────────────────────────────────┘  │                      │
+└──────────────────────────────────────┴──────────────────────┘
+```
 
 ---
 
@@ -501,9 +624,21 @@ The merchant dashboard is a comprehensive financial management interface with **
 │  ▸ Liquidity│  *Admin-only sections                          │
 │  ▸ API      │                                                │
 └──────────┴──────────────────────────────────────────────────┘
-│  Footer: 3-column legal structure + logout                   │
+│  Footer: Unified legal structure (shared component)          │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### Login Grid Background
+
+The login page features a new `LoginGridBackground` component (`src/components/wallet/login-grid-background.tsx`) — a full-screen canvas animation:
+
+- **Animated grid** — pulsating green grid lines with intersection glow dots
+- **Neon light beams** — cyan (`#00F0FF`) and green (`#00FF41`) beams traveling along grid lines
+- **Beam spawning** — periodic horizontal and vertical beams with random speed/width
+- **Disintegration effect** — when two beams cross (proximity < 20px), burst particles spawn at the intersection
+- **Particle system** — radial glow particles with friction decay
+- **Vignette** — darkened edges for depth focus
+- **Performance** — `requestAnimationFrame` loop with proper cleanup
 
 ### Auth Gate Flow
 
@@ -514,7 +649,7 @@ DashboardShell (mount)
   validateToken()
      │
      ├── Not mounted? → Show Logo3D spinner
-     ├── isAuthenticated === false → Show LoginPage
+     ├── isAuthenticated === false → Show LoginPage (with LoginGridBackground)
      ├── isLoading === true → Show "Validating session..." spinner
      └── isAuthenticated === true → Show full dashboard layout
 ```
@@ -670,12 +805,12 @@ interface ProviderAdapter {
 #### 1. `store.ts` — Page Navigation (SPA)
 
 ```typescript
-type Page = 'landing' | 'command' | 'studio' | 'legal' | 'prices' | 'services' | 'wallet'
+type Page = 'landing' | 'command' | 'exchange' | 'legal' | 'prices' | 'services' | 'wallet'
 type Locale = 'en' | 'fr' | 'pt-PT' | 'pt-BR'
 
 interface AtlasState {
   currentPage: Page         // Default: 'landing'
-  kybCompleted: boolean     // Gate for command/studio pages
+  kybCompleted: boolean     // Gate for command pages
   locale: Locale            // Default: 'en'
   selectedLegalTab: LegalTab
   setPage, setKybCompleted, setLocale, navigateToLegal
@@ -717,12 +852,14 @@ interface DashboardState {
 
 ### Client (`src/lib/api/client.ts`)
 
-API Client V2.00 — typed HTTP client with Bearer token auth.
+API Client V2.10 — typed HTTP client with **Supabase session interceptor** for auth.
 
 ```typescript
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.atlasglobal.digital/api/v1'
 
-// Token sourced from localStorage: 'nexflowx_token'
+// Token retrieval order:
+// 1. supabase.auth.getSession() → access_token (preferred)
+// 2. localStorage: 'nexflowx_token' (fallback)
 // Auth header: Authorization: Bearer <token>
 // Mode: CORS
 ```
@@ -731,7 +868,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.atlasglobal.dig
 
 | Namespace | Method | Endpoint | Purpose |
 |-----------|--------|----------|---------|
-| `auth` | GET | `/auth/me` | Validate JWT, get user profile |
+| `auth` | GET | `/auth/me` | Validate Supabase JWT, get user profile |
 | `wallets` | GET | `/wallets` | List merchant wallets |
 | `swap` | POST | `/swap` | Execute currency conversion |
 | `payout` | POST | `/payout` | Request payout |
@@ -810,26 +947,30 @@ new QueryClient({
 
 ---
 
-## Local API Routes
+## Deprecated Local API Routes
 
-8 Next.js API routes for demo/local development (SQLite-backed with mock data fallbacks):
+The following 7 local API routes have been **deprecated and converted to stubs**. They return `{ deprecated: true }` and are no longer used by the frontend. ALL data now flows through `https://api.atlasglobal.digital/api/v1`.
 
-| Route | Methods | Description | Mock Fallback |
-|-------|---------|-------------|---------------|
-| `/api` | GET | Health check: `{ message: "Hello, world!" }` | No |
-| `/api/kyb` | POST, GET | KYB verification — upsert + query by email | No |
-| `/api/transactions` | GET, POST | List/create transactions with NeXFlowX routing | 25 auto-seeded txs |
-| `/api/storefronts` | GET, POST | Store CRUD with jurisdiction-aware compliance text | No |
-| `/api/v2/merchants` | GET | Merchant list with tier config, summary stats | 10 mock merchants |
-| `/api/v2/customers` | GET | CRM customer list with churn risk analysis | 12 mock customers |
-| `/api/v2/analytics` | GET | Dashboard KPIs, charts, 30-day volume | All mock data |
-| `/api/v2/payments/process` | POST, GET | Full NeXFlowX payment processing + ledger | Routing simulation |
+| Route | Status | Replacement |
+|-------|--------|-------------|
+| `/api/kyb` | ⚠️ Deprecated stub | Backend API |
+| `/api/transactions` | ⚠️ Deprecated stub | Backend API |
+| `/api/storefronts` | ⚠️ Deprecated stub | Backend API |
+| `/api/v2/analytics` | ⚠️ Deprecated stub | Backend API |
+| `/api/v2/customers` | ⚠️ Deprecated stub | Backend API |
+| `/api/v2/merchants` | ⚠️ Deprecated stub | Backend API |
+| `/api/v2/payments/process` | ⚠️ Deprecated stub | Backend API |
+| `/api` | ✅ Active | Health check: `{ message: "Hello, world!" }` |
+
+> The route files still exist in the repository but contain minimal stub implementations. They may be removed entirely in a future cleanup.
 
 ---
 
-## Database Schema (Prisma + SQLite)
+## Database Schema (Local Dev Only — Prisma + SQLite)
 
-10 models for local demo data:
+> **Important:** SQLite/Prisma is used **only for local development**. In production, ALL data is managed by the backend API's PostgreSQL database. The frontend never connects directly to any database.
+
+10 models for local dev/demo data:
 
 | Model | Purpose | Key Fields |
 |-------|---------|------------|
@@ -839,179 +980,178 @@ new QueryClient({
 | **Transaction** | Payment with routing | gateway, region, routingEngine, routingLevel, confidence, feeAmount, netAmount |
 | **RoutingRule** | Custom routing rules | level, conditions (JSON), gateway, fallbackGateway, hitCount |
 | **Customer** | CRM data | ltv, churnRisk, totalSpent, txCount, avgOrderValue, tags |
-| **LedgerEntry** | Reconciliation | type, amount, currency, gateway, status |
-| **OnboardingProgress** | User onboarding | currentStep, completedSteps, kybSubmitted, bankConnected, apiKeysGenerated |
-| **Storefront** | E-commerce store | slug (unique), products (JSON), jurisdiction, complianceText |
-| **MerchantKyb** | KYB verification | companyName, registrationNumber, directorName, directorId, status |
+| **LedgerEntry** | Financial ledger | type, status, direction, amount, currency, reference |
+| **Store** | E-commerce store | name, status, jurisdiction, complianceText |
+| **StorefrontProduct** | Store products | name, price, status, storeId |
+| **PaymentLink** | Checkout links | amount, currency, status, expiresAt, shareableUrl |
 
 ---
 
 ## Environment Variables
 
-```env
-# ─── Backend API ───
-NEXT_PUBLIC_API_URL=https://api.atlasglobal.digital/api/v1
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | **Yes** (production) | Supabase project URL (e.g., `https://xxx.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Yes** (production) | Supabase anonymous/public key |
+| `NEXT_PUBLIC_API_URL` | No | Backend API URL (default: `https://api.atlasglobal.digital/api/v1`) |
+| `NEXT_PUBLIC_ENABLE_DEV_BYPASS` | No | Set to `true` to enable dev bypass mode (dev only, never in production) |
 
-# ─── Supabase Authentication ───
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+### Supabase Configuration
 
-# ─── Development (bypass auth in local dev) ───
-NEXT_PUBLIC_ENABLE_DEV_BYPASS=false
+The Supabase client (`src/lib/supabase.ts`) is configured with real credentials in production. When environment variables are missing, it falls back to a no-op shim that allows the module to load without crashing (useful for initial setup).
+
+```typescript
+// When NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set:
+// → Creates a real Supabase client with full auth capabilities
+// When missing:
+// → Creates a minimal no-op client (auth calls will fail gracefully)
+// → Dev bypass mode still works if NEXT_PUBLIC_ENABLE_DEV_BYPASS=true
 ```
-
-> **Note:** All `NEXT_PUBLIC_*` variables are exposed to the browser. Never store secrets or private keys in environment variables prefixed with `NEXT_PUBLIC_`.
 
 ---
 
 ## CORS Configuration
 
-| Origin | Status |
-|--------|--------|
-| `wallet.atlasglobal.digital` | Whitelisted |
-| `localhost:3000` | Active in development |
-| `*.space.z.ai` | Allowed dev origin (sandbox) |
+All API requests from the frontend to `api.atlasglobal.digital` use CORS mode (`mode: 'cors'`). The backend Express.js server must be configured to accept requests from the frontend domain.
 
-- CORS is handled by the backend middleware
-- The API client uses `mode: 'cors'` on all requests
-- No CORS issues expected in production deployments on `wallet.atlasglobal.digital`
+```typescript
+// Frontend (api/client.ts)
+fetch(`${API_BASE}${endpoint}`, { ...options, mode: 'cors', headers })
+```
 
 ---
 
 ## Admin Access Control
 
-Admin functionality is enforced at the **backend level**. The frontend hides UI elements for non-admin users:
-
-```
-┌──────────────────────────────────────────────────┐
-│                                                  │
-│   GET /api/v1/admin/users                        │
-│                                                  │
-│   Authorization: Bearer <access_token>           │
-│                     │                            │
-│                     ▼                            │
-│              ┌─────────────┐                     │
-│              │  Middleware  │                     │
-│              │  requireRole │                     │
-│              │  ('admin')   │                     │
-│              └──────┬──────┘                     │
-│                     │                            │
-│         ┌───────────┼───────────┐                │
-│         │ role ===  │           │                │
-│         │ 'admin'   │  Other    │                │
-│         ▼           ▼           ▼                │
-│      ✅ 200 OK   ❌ 403    ❌ 401               │
-│                                                  │
-└──────────────────────────────────────────────────┘
-```
-
-| Property | Value |
-|----------|-------|
-| **Role source** | `/users/me` payload (`role` field) |
-| **Admin-only routes** | `/api/v1/admin/users`, `/api/v1/admin/payouts/pending` |
-| **Non-admin response** | `403 Forbidden` with `{ error: { code: "FORBIDDEN" } }` |
+| Section | Admin | Merchant | Customer |
+|---------|-------|----------|----------|
+| Dashboard Overview | ✅ | ✅ | ✅ |
+| Wallet Management | ✅ | ✅ | ✅ |
+| Transaction Activity | ✅ | ✅ | ✅ |
+| Swap & Convert | ✅ | ✅ | ✅ |
+| Payouts | ✅ | ✅ | ❌ |
+| Deposits | ✅ | ✅ | ❌ |
+| Store Management | ✅ | ✅ | ❌ |
+| Gateway Configuration | ✅ | ✅ | ❌ |
+| Payment Links | ✅ | ✅ | ❌ |
+| Settings & Security | ✅ | ✅ | ✅ |
+| Admin Approvals | ✅ | ❌ | ❌ |
+| System Liquidity | ✅ | ❌ | ❌ |
+| API Management | ✅ | ✅ | ❌ |
 
 ---
 
 ## Internationalization
 
-| Property | Value |
-|----------|-------|
-| **Library** | next-intl v4.9+ |
-| **Locales** | `en`, `fr`, `pt-PT`, `pt-BR` |
-| **Config** | `src/i18n/config.ts` |
-| **Request handler** | `src/i18n/request.ts` |
-| **Locale switcher** | Navbar dropdown (Globe icon) |
+4 locales supported via `next-intl`:
+
+| Code | Language | Region |
+|------|----------|--------|
+| `en` | English | International |
+| `fr` | French | France |
+| `pt-PT` | Portuguese | Portugal |
+| `pt-BR` | Portuguese | Brazil |
 
 ---
 
 ## Deployment
 
-| Property | Value |
-|----------|-------|
-| **Framework** | Next.js 16 with `standalone` output |
-| **Runtime** | Bun |
-| **Recommended** | Vercel (automatic Next.js detection) |
-| **Build command** | `bun run build` |
-| **Start command** | `bun run start` |
-| **Node version** | 20.x+ |
+### Domain
 
-### Vercel Deployment
+- **Primary domain**: `atlasglobal.digital`
+- **API backend**: `https://api.atlasglobal.digital/api/v1`
+- **SEO metadata** is configured for `atlasglobal.digital` in `src/app/layout.tsx`
 
-1. Connect repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy — Vercel auto-detects Next.js and configures build
-
-### Self-Hosted Deployment
+### Build & Deploy
 
 ```bash
-# Install dependencies
-bun install
-
-# Set up database (local demo only)
-bun run db:push
-
-# Build for production
+# Build the application
 bun run build
 
 # Start production server
 bun run start
 ```
 
-### Development
+### Production Architecture
+
+```
+  Internet
+     │
+     ▼
+  Caddy (Reverse Proxy, port :81)
+     │
+     ▼
+  Next.js (standalone, port :3000)
+     │
+     ├── Supabase Auth (auth.atlasglobal.digital)
+     │
+     ├── Backend API (api.atlasglobal.digital/api/v1)
+     │
+     └── CoinGecko API (api.coingecko.com) — for Exchange page
+```
+
+> **Note:** There is NO SQLite, Prisma, or local database in production. All data goes through the backend API's PostgreSQL database. The Supabase Auth service handles authentication independently.
+
+### Logo
+
+The official logo (`logo-atlas-core.png`) is used throughout the site:
+- Browser favicon (16x16 to 256x256)
+- Apple Touch Icon (180x180)
+- Open Graph image
+- Navbar and footer branding
+
+---
+
+## Development
 
 ```bash
 # Install dependencies
 bun install
 
-# Start dev server (port 3000)
+# Start development server (port 3000)
 bun run dev
 
-# Run linter
+# Run linting
 bun run lint
 
-# Push schema to database
+# Push database schema (local dev only)
 bun run db:push
 ```
+
+### Dev Bypass Mode
+
+For local development without Supabase, set in `.env.local`:
+
+```env
+NEXT_PUBLIC_ENABLE_DEV_BYPASS=true
+```
+
+This allows login with any credentials (creates a fake admin user). The UI shows a `DEV BYPASS` badge.
 
 ---
 
 ## Compliance & Legal
 
-| Certification | Status |
-|---------------|--------|
-| **PCI-DSS** | Compatible |
-| **ISO 27001** | Compatible |
-| **PSD2** | Compatible |
-| **LGPD** | Compatible |
+| Entity | Details |
+|--------|---------|
+| **Operator** | Sergio Monteiro (EI) — SIREN 790 155 006 — SIRET 79015500600014 |
+| **Holding** | IAHUB360 LTD — UK Reg. #16568194 |
+| **Jurisdictions** | EU (France), UK, Brazil |
+| **Status** | Technical Service Provider (TSP) — NOT a Financial Institution |
+| **Year Established** | 2013 (France) |
 
-### Legal Entity Structure
+### Legal Documents
 
-| Entity | Type | Jurisdiction | Registration |
-|--------|------|-------------|-------------|
-| Sergio Monteiro | EI (Entreprise Individuelle) | France | SIREN 790 155 006 |
-| IAHUB360 LTD | LTD (Private Limited) | United Kingdom | #16568194 |
-| Atlas Global Core | ENI | Portugal | NIF Pending |
-| Atlas Brazil Hub | Hub | Brazil | CNPJ Pending |
+All legal documents are accessible via the Legal Hub page:
 
-> **Operated by** Sergio Monteiro (EI) — SIREN 790 155 006
->
-> Atlas Global Core operates as a **Technical Service Provider (TSP)** and is **not** a Financial Institution. All payment processing is conducted through licensed partners (Stripe, Viva.com, Onramp.money, Adyen, Stark Bank).
+- Terms of Service
+- Privacy Policy
+- Compliance Manifesto
+- Refund Policy
+- Corporate Structure
 
 ---
 
 ## License
 
-**Proprietary — Atlas Global Core**
-
-All rights reserved. Unauthorized reproduction, distribution, or modification of this software is strictly prohibited.
-
----
-
-<div align="center">
-
-**Built with precision. Orchestrated by intelligence.**
-
-*Atlas Global Core — The Context-Aware Orchestration Layer for the Global Agentic Economy*
-
-</div>
+Proprietary — Atlas Global Core. All rights reserved.

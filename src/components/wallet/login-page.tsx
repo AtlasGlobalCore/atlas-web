@@ -1,156 +1,28 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { useAuthStore, IS_DEV_MODE } from '@/lib/auth-store';
-import { Eye, EyeOff, Loader2, Lock, Mail, Terminal } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, Mail, Terminal, User } from 'lucide-react';
 import { Logo3D } from '@/components/ui/logo-3d';
-
-/* ─── Canvas particle background ─── */
-function FinancialCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const init = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    const particles: {
-      x: number; y: number; vx: number; vy: number;
-      size: number; opacity: number; color: string;
-    }[] = [];
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const colors = ['#00D4AA', '#00B4D8', '#00D4AA', '#0d7377'];
-
-    for (let i = 0; i < 80; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.3 - 0.15,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.5 + 0.1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      });
-    }
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Grid lines
-      ctx.strokeStyle = 'rgba(0, 212, 170, 0.02)';
-      ctx.lineWidth = 1;
-      const gridSize = 60;
-      for (let x = 0; x < canvas.width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < canvas.height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
-
-      // Particles
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.opacity;
-        ctx.fill();
-      }
-
-      // Connection lines
-      ctx.globalAlpha = 1;
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(0, 212, 170, ${0.04 * (1 - dist / 120)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-
-      // Animated flowing sine wave (financial data flow)
-      const time = Date.now() * 0.001;
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(0, 212, 170, 0.06)';
-      ctx.lineWidth = 1.5;
-      for (let x = 0; x < canvas.width; x += 2) {
-        const y = canvas.height * 0.5 + Math.sin(x * 0.005 + time) * 80 + Math.sin(x * 0.01 + time * 1.5) * 40;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      // Second wave
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(0, 180, 216, 0.04)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < canvas.width; x += 2) {
-        const y = canvas.height * 0.6 + Math.sin(x * 0.008 + time * 0.7) * 60 + Math.cos(x * 0.003 + time) * 50;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      animId = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener('resize', resize);
-    };
-  }, []);
-
-  useEffect(() => {
-    const cleanup = init();
-    return cleanup;
-  }, [init]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 z-0"
-      style={{ background: '#0F1117' }}
-    />
-  );
-}
+import LoginGridBackground from './login-grid-background';
 
 /* ─── Login / Register Page ─── */
 export default function LoginPage() {
   const { login, register, isLoading, loginError, registerError } = useAuthStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // Login fields
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+
+  // Register fields
+  const [regIdentifier, setRegIdentifier] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+
+  // Shared
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registrationSent, setRegistrationSent] = useState(false);
 
   const switchMode = (newMode: 'login' | 'register') => {
@@ -161,14 +33,18 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
-    await login(email, password);
+    if (!loginIdentifier || !regPassword) return;
+    await login(loginIdentifier, regPassword);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
-    const success = await register(email, password);
+    if (!regEmail || !regPassword || !regConfirmPassword) return;
+    if (regPassword !== regConfirmPassword) {
+      useAuthStore.setState({ registerError: 'As palavras-passe não coincidem.' });
+      return;
+    }
+    const success = await register(regEmail, regPassword);
     if (success && !useAuthStore.getState().isAuthenticated) {
       // Registration succeeded but email confirmation is required
       setRegistrationSent(true);
@@ -177,9 +53,14 @@ export default function LoginPage() {
 
   const currentError = mode === 'login' ? loginError : registerError;
 
+  // For login mode, we use loginIdentifier + regPassword
+  // For register mode, we use regEmail + regPassword + regConfirmPassword
+  const isLoginFormDisabled = !loginIdentifier || !regPassword;
+  const isRegisterFormDisabled = !regEmail || !regPassword || !regConfirmPassword;
+
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ background: '#0F1117' }}>
-      <FinancialCanvas />
+      <LoginGridBackground />
 
       {/* Radial glow behind card */}
       <div
@@ -266,90 +147,220 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-5">
-            {/* Email */}
-            <div className="space-y-2">
-              <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="neon-input w-full pl-10 pr-4 py-3 rounded-lg text-sm"
-                  placeholder='utilizador@empresa.com'
-                  autoComplete={mode === 'register' ? 'email' : 'username'}
-                  required
-                />
+          {/* ─── LOGIN FORM ─── */}
+          {mode === 'login' && (
+            <form onSubmit={handleLogin} className="space-y-5">
+              {/* Identifier (ID / Email) */}
+              <div className="space-y-2">
+                <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
+                  Identificador
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
+                  <input
+                    type="text"
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    className="neon-input w-full pl-10 pr-4 py-3 rounded-lg text-sm"
+                    placeholder='ID ou Email'
+                    autoComplete='username'
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Password */}
-            <div className="space-y-2">
-              <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
-                Palavra-passe
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="neon-input w-full pl-10 pr-12 py-3 rounded-lg text-sm"
-                  placeholder='••••••••••••'
-                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                  required
-                  minLength={mode === 'register' ? 8 : undefined}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded"
-                  style={{ color: '#A0A0A0' }}
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              {/* Password */}
+              <div className="space-y-2">
+                <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
+                  Palavra-passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="neon-input w-full pl-10 pr-12 py-3 rounded-lg text-sm"
+                    placeholder='••••••••••••'
+                    autoComplete='current-password'
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded"
+                    style={{ color: '#A0A0A0' }}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-              {mode === 'register' && (
+
+              {/* Error */}
+              {currentError && (
+                <div
+                  className="animate-fade-up rounded-lg px-4 py-3 text-sm"
+                  style={{
+                    background: 'rgba(255, 59, 92, 0.08)',
+                    border: '1px solid rgba(255, 59, 92, 0.25)',
+                    color: '#FF5252',
+                  }}
+                >
+                  {currentError}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isLoading || isLoginFormDisabled}
+                className="neon-btn-primary w-full py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    A autenticar...
+                  </>
+                ) : (
+                  'Entrar na Plataforma'
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* ─── REGISTER FORM ─── */}
+          {mode === 'register' && (
+            <form onSubmit={handleRegister} className="space-y-5">
+              {/* Identifier (ID) */}
+              <div className="space-y-2">
+                <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
+                  Identificador
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
+                  <input
+                    type="text"
+                    value={regIdentifier}
+                    onChange={(e) => setRegIdentifier(e.target.value)}
+                    className="neon-input w-full pl-10 pr-4 py-3 rounded-lg text-sm"
+                    placeholder='O seu nome de utilizador ou ID'
+                    autoComplete='username'
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
+                  <input
+                    type="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    className="neon-input w-full pl-10 pr-4 py-3 rounded-lg text-sm"
+                    placeholder='utilizador@empresa.com'
+                    autoComplete='email'
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
+                  Palavra-passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className="neon-input w-full pl-10 pr-12 py-3 rounded-lg text-sm"
+                    placeholder='••••••••••••'
+                    autoComplete='new-password'
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded"
+                    style={{ color: '#A0A0A0' }}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <p className="nex-mono text-[10px]" style={{ color: '#606060' }}>
                   Mínimo 8 caracteres
                 </p>
-              )}
-            </div>
-
-            {/* Error */}
-            {currentError && (
-              <div
-                className="animate-fade-up rounded-lg px-4 py-3 text-sm"
-                style={{
-                  background: 'rgba(255, 59, 92, 0.08)',
-                  border: '1px solid rgba(255, 59, 92, 0.25)',
-                  color: '#FF5252',
-                }}
-              >
-                {currentError}
               </div>
-            )}
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading || !email || !password}
-              className="neon-btn-primary w-full py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {mode === 'login' ? 'A autenticar...' : 'A criar conta...'}
-                </>
-              ) : (
-                mode === 'login' ? 'Entrar na Plataforma' : 'Criar Conta'
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <label className="nex-mono text-[11px] uppercase tracking-wider" style={{ color: '#A0A0A0' }}>
+                  Confirmar Palavra-passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#606060' }} />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={regConfirmPassword}
+                    onChange={(e) => setRegConfirmPassword(e.target.value)}
+                    className="neon-input w-full pl-10 pr-12 py-3 rounded-lg text-sm"
+                    placeholder='••••••••••••'
+                    autoComplete='new-password'
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded"
+                    style={{ color: '#A0A0A0' }}
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Error */}
+              {currentError && (
+                <div
+                  className="animate-fade-up rounded-lg px-4 py-3 text-sm"
+                  style={{
+                    background: 'rgba(255, 59, 92, 0.08)',
+                    border: '1px solid rgba(255, 59, 92, 0.25)',
+                    color: '#FF5252',
+                  }}
+                >
+                  {currentError}
+                </div>
               )}
-            </button>
-          </form>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isLoading || isRegisterFormDisabled}
+                className="neon-btn-primary w-full py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    A criar conta...
+                  </>
+                ) : (
+                  'Criar Conta'
+                )}
+              </button>
+            </form>
+          )}
 
           {/* Secure notice / Dev hint */}
           <div className="mt-6 flex items-center justify-center gap-2 nex-mono text-[10px]" style={{ color: '#606060' }}>

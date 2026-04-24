@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
-const siteUrl = "https://atlasglobalcore.com";
+const siteUrl = "https://atlasglobal.digital";
 
 export const metadata: Metadata = {
   title: "Atlas Global Core | Context-Aware Orchestration Layer for the Agentic Economy",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "TSP",
     "Technical Service Provider",
   ],
-  authors: [{ name: "Sergio Monteiro", url: "https://atlasglobalcore.com" }],
+  authors: [{ name: "Sergio Monteiro", url: "https://atlasglobal.digital" }],
   creator: "Sergio Monteiro (EI) in cooperation with IAHUB360 LTD — SIREN 790 155 006 — SIRET 79015500600014",
   publisher: "Atlas Global Core",
   robots: {
@@ -42,10 +42,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "16x16 32x32 48x48 64x64 128x128 256x256", type: "image/x-icon" },
-      { url: "/logo-atlas.png", sizes: "1254x1254", type: "image/png" },
+      { url: "/logo-atlas-core.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo-atlas-core.png", sizes: "180x180", type: "image/png" },
     ],
   },
   metadataBase: new URL(siteUrl),
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteUrl,
-    siteName: "Atlas Global Core",
+    siteName: "Atlas Global Digital",
     title: "Atlas Global Core | Context-Aware Orchestration Layer",
     description:
       "The Context-Aware Orchestration Layer for the Global Agentic Economy. AI-driven liquidity routing and B2B settlement across Fiat and Crypto networks.",
@@ -71,12 +71,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Atlas Global Core | Context-Aware Orchestration Layer",
+    title: "Atlas Global Digital | Context-Aware Orchestration Layer",
     description:
       "The Context-Aware Orchestration Layer for the Global Agentic Economy. AI-driven liquidity routing and B2B settlement.",
     images: ["/og-image.png"],
   },
-  category: "technology",
+  category: ["technology", "finance", "fintech", "payments", "crypto"],
 };
 
 export default function RootLayout({

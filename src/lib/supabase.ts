@@ -1,22 +1,29 @@
-// Supabase shim — no-op implementation for local development
-// Replace with real Supabase credentials when available
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const noopAuth = {
-  getSession: async () => ({ data: { session: null } }),
-  signInWithPassword: async (_: any) => ({ data: { session: null }, error: { message: 'Supabase not configured' } }),
-  signUp: async (_: any) => ({ data: { user: null }, error: { message: 'Supabase not configured' } }),
-  signOut: async () => ({ error: null }),
-  onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+const isConfigured = supabaseUrl.length > 0 && supabaseAnonKey.length > 0
+
+if (!isConfigured) {
+  console.warn(
+    '[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
+    'Auth features will not work until these environment variables are set. ' +
+    'Dev Bypass mode is available if NEXT_PUBLIC_ENABLE_DEV_BYPASS=true'
+  )
 }
 
-const noopClient = {
-  auth: noopAuth,
-  from: () => ({
-    select: () => ({ eq: () => ({ single: async () => ({ data: null, error: null }) }) }),
-    insert: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }),
-  }),
+// Create a real client only when properly configured.
+// When unconfigured, export a "null client" shim so that auth-store
+// can still import this module without crashing at module evaluation.
+function createMaybeRealClient(): SupabaseClient {
+  if (isConfigured) {
+    return createClient(supabaseUrl, supabaseAnonKey)
+  }
+  // Return a minimal no-op client using a fake project URL
+  // This prevents createClient from throwing on empty string
+  return createClient('https://none.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vbmUiLCJpYXQiOjE2NDYzNjEwMTMsImV4cCI6MTk2MTkzNzAxM30.placeholder')
 }
 
-export const supabase = noopClient as any
-export const supabaseAdmin = noopClient as any
-export type SupabaseClient = typeof supabase
+export const supabase = createMaybeRealClient()
+export const IS_SUPABASE_CONFIGURED = isConfigured
