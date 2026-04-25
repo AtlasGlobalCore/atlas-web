@@ -1,50 +1,26 @@
-# Worklog
-
----
-Task ID: 1
-Agent: Main Architect
-Task: Evolve Atlas Global Core landing page — Context-Aware Orchestration Layer positioning
-
-Work Log:
-- Read and analyzed existing project structure: store, navbar, footer, landing-page, globals.css, layout.tsx
-- Created `/src/components/atlas/living-background.tsx` — Manus.im-inspired living background with mouse-reactive grid, pulsing radial gradients, data-flow particles, and vignette
-- Created `/src/components/atlas/nexflowx-companion.tsx` — NeXFlowX AI Companion: floating pulsing Orb (geometric abstract AI representation) + terminal-style chat panel with contextual AI responses about routing, compliance, marketplace, and infrastructure
-- Rewrote `/src/components/atlas/landing-page.tsx` with all new sections:
-  - Hero Section: Updated headline "The Context-Aware Orchestration Layer for the Global Agentic Economy", new sub-headline about AI-driven liquidity routing, CTA "Access the Infrastructure"
-  - NeXFlowX AI-Engine Section: Visual flow diagram showing input signals (Jurisdiction, Time-Zone, Liquidity, Risk Score) → Central AI Engine → Routing Decision (Viva.com SEPA EU / Onramp.money USDT Global)
-  - Private B2B Marketplace Section: Three pillars (Compute Power/GPU Reselling, Agentic Workflows, Digital IP Assets) with Atlas as Financial Hub banner
-  - Core Modules Section: Updated feature cards
-  - Trust Bar: Updated partners (Viva.com, Onramp.money added)
-  - Stats Section: Preserved existing stats
-  - Closing CTA: Updated messaging
-- Updated `/src/app/globals.css` with `.grid-bg-animated` (pulsing grid animation), `.custom-scrollbar` (green-tinted scrollbar for chat), and `@keyframes grid-pulse`
-- Updated `/src/app/layout.tsx` metadata: new title, description, keywords reflecting Agentic Economy positioning
-- Fixed lint error: replaced `useEffect` + `useState` pattern with `useSyncExternalStore` for client detection
-- Final lint check: 0 errors, 0 warnings
-
-Stage Summary:
-- Complete landing page evolution with new narrative positioning
-- 3 new files created, 2 files updated
-- All sections are responsive and animated with Framer Motion
-- Living background provides Manus.im-style atmospheric effect
-- NeXFlowX Companion provides interactive AI assistant with floating Orb
-- Dev server running successfully at port 3000
-
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Create comprehensive technical README dossier and push to AtlasGlobalCore/atlas-web.git
+Task: Full integration round — navbar logo, wallet branding, i18n, exchange access, cleanup
 
 Work Log:
-- Explored full project structure (src/, components/, lib/, hooks/, api routes, prisma)
-- Read all key files: package.json, next.config.ts, tailwind.config.ts, auth-store.ts, nexflowx.ts, api/client.ts, api/contracts.ts
-- Analyzed NeXFlowX v3.0 routing engine (608 lines, 3-level waterfall, 5 providers, 15 gateways)
-- Documented all 14 React Query hooks, 3 Zustand stores, 44 shadcn/ui components
-- Wrote 741-line comprehensive technical dossier README.md
-- Configured git remote to AtlasGlobalCore/atlas-web.git
-- Force-pushed to replace existing project
+- Read and analyzed all project files (navbar, login-page, dashboard-shell, footer, logo-3d, exchange-page, store, landing-page, command-hub, services-page, pricing-page, legal-hub)
+- Fixed Logo3D component: wrapped img in `rounded-full overflow-hidden` div to eliminate black corner artifacts
+- Updated Navbar: replaced Shield icon with Atlas Core logo image (round clipping), made logo+title clickable → landing page, renamed "ATLASWALLET" → "> WALLET", removed KYB guard for Exchange/studio pages
+- Updated LoginPage: title changed to "Atlas Wallet" (teal #00D4AA), kept "Global Payments Platform" subtitle, improved logo rendering, added site-wide Footer component
+- Updated Footer: replaced Shield icon with Atlas Core logo image in brand section
+- Created i18n system: useTranslation hook at src/lib/i18n.ts using Zustand store locale
+- Created 4 translation files (EN, FR, PT-PT, BR) with 83 keys across 7 sections at src/i18n/locales/
+- Wired i18n into Navbar and LoginPage (all labels, buttons, messages translated)
+- Installed missing d3-geo dependency (required by world-map-network.tsx)
+- Conducted comprehensive audit: identified 15+ unused npm packages, dead code files (src/lib/db.ts, studio-builder.tsx, wallet/index.ts), non-functional i18n config
+- Updated README to v2.2.0 with Recent Changes section
+- Committed and pushed to AtlasGlobalCore/atlas-web.git (commit 0ad3963)
 
 Stage Summary:
-- README.md: 741 lines, 22 sections covering complete architecture
-- Pushed to https://github.com/AtlasGlobalCore/atlas-web.git (forced update)
-- Commit: 894ec6f "docs: comprehensive technical dossier README"
+- All 8 requested changes implemented
+- Site returns HTTP 200, no compile errors
+- GitHub pushed successfully: https://github.com/AtlasGlobalCore/atlas-web.git
+- i18n system functional: language switcher in navbar now translates Navbar labels and LoginPage UI
+- Known issues: landing page, pricing, services, exchange pages still have hardcoded English strings (i18n hook available but not yet wired)
+- Unused packages identified for future cleanup: next-auth, @reactuses/core, @mdxeditor/editor, @dnd-kit/*, react-markdown, react-syntax-highlighter, zod, uuid, vaul
