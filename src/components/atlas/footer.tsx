@@ -53,8 +53,13 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-[#00FF41] rounded-sm flex items-center justify-center">
-                <Shield className="w-3.5 h-3.5 text-[#050505]" />
+              <div className="w-6 h-6 rounded-full overflow-hidden border border-[rgba(0,212,170,0.3)]">
+                <img
+                  src="/logo-atlas-core.png"
+                  alt="Atlas Core"
+                  className="w-full h-full object-cover"
+                  draggable={false}
+                />
               </div>
               <span className="font-mono-data text-[10px] tracking-[0.2em] text-[#00FF41] glow-green">
                 ATLAS GLOBAL CORE v2.1

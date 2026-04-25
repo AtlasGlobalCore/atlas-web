@@ -14,6 +14,44 @@ AI-driven liquidity routing · Real-time dynamic compliance · Seamless B2B sett
 
 ---
 
+## Recent Changes
+
+> **Build 2.2.0** — Changelog of recent updates
+
+### Navbar
+- Integrated Atlas Core logo with proper round clipping (`rounded-full overflow-hidden`)
+- Logo + title now clickable, navigating back to the landing page
+- Menu item renamed from "ATLASWALLET" to "> WALLET"
+- Removed KYB guard for Exchange page — direct access without authentication
+
+### LoginPage (Wallet)
+- Title changed to "Atlas Wallet" with teal (`#00D4AA`) color accent on "Wallet"
+- Improved animated logo round clipping — eliminated black corner artifacts
+- Added site-wide footer to login view
+
+### Logo3D Component
+- Fixed round clipping using `rounded-full overflow-hidden` wrapper, eliminating black corner artifacts on all logo renderings
+
+### Footer
+- Updated brand logo from Shield icon to Atlas Core logo image with round clipping
+
+### i18n System
+- Created functional multi-language translation system with `useTranslation` hook
+- Added translation files for **EN**, **FR**, **PT-PT**, **BR** locales (83 keys across 7 sections)
+- Wired translations into Navbar and LoginPage components
+- Language switcher in navbar now fully functional
+
+### Exchange Page
+- Removed KYB gate — crypto exchange page now accessible directly with real CoinGecko data
+
+### Dependencies
+- Installed missing `d3-geo` and `@types/d3-geo` packages (required by `world-map-network.tsx`)
+
+### Critical Fix
+- Fixed `login-grid-background.tsx` named export mismatch (was imported as default, causing runtime crash)
+
+---
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -60,7 +98,7 @@ The platform enables merchants and enterprises to:
 | **API Backend** | `https://api.atlasglobal.digital/api/v1` |
 | **Operator** | Sergio Monteiro (EI) — SIREN 790 155 006 |
 | **Holding** | IAHUB360 LTD — UK Reg. #16568194 |
-| **Version** | 2.1.0 |
+| **Version** | 2.2.0 |
 | **Runtime** | Bun |
 
 ---
@@ -519,7 +557,7 @@ The landing page is a single-page application with 6 sections and a Manus.im-ins
 
 | Label | Page Key | Component | KYB Required |
 |-------|----------|-----------|-------------|
-| **ATLASWALLET** | `wallet` | `DashboardShell` | No (shows login gate) |
+| **> WALLET** | `wallet` | `DashboardShell` | No (shows login gate) |
 | **EXCHANGE** | `exchange` | `ExchangePage` | No |
 | **PRICING** | `prices` | `PricingPage` | No |
 | **SERVICES** | `services` | `ServicesPage` | No |

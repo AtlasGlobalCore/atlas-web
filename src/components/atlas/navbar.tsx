@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Terminal, BarChart3, Scale, Shield, Circle, User, Globe, CreditCard, Cpu } from "lucide-react";
+import { Terminal, BarChart3, Scale, User, Globe, CreditCard, Cpu } from "lucide-react";
 import { useAtlasStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n";
 import type { Page, Locale } from "@/lib/store";
 
 const localeLabels: Record<Locale, string> = {
@@ -15,16 +16,17 @@ const localeLabels: Record<Locale, string> = {
 
 const localeOptions: Locale[] = ["en", "fr", "pt-PT", "pt-BR"];
 
-const navItems: { label: string; icon: React.ElementType; page: Page }[] = [
-  { label: "ATLASWALLET", icon: Terminal, page: "wallet" },
-  { label: "EXCHANGE", icon: BarChart3, page: "studio" },
-  { label: "PRICING", icon: CreditCard, page: "prices" },
-  { label: "SERVICES", icon: Cpu, page: "services" },
-  { label: "LEGAL", icon: Scale, page: "legal" },
+const navItems = [
+  { labelKey: "nav.wallet", icon: Terminal, page: "wallet" as Page },
+  { labelKey: "nav.exchange", icon: BarChart3, page: "studio" as Page },
+  { labelKey: "nav.pricing", icon: CreditCard, page: "prices" as Page },
+  { labelKey: "nav.services", icon: Cpu, page: "services" as Page },
+  { labelKey: "nav.legal", icon: Scale, page: "legal" as Page },
 ];
 
 export function Navbar() {
-  const { currentPage, setPage, kybCompleted, locale, setLocale } = useAtlasStore();
+  const { currentPage, setPage, locale, setLocale } = useAtlasStore();
+  const { t } = useTranslation();
   const [langOpen, setLangOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -39,34 +41,32 @@ export function Navbar() {
   }, []);
 
   const handleNav = (page: Page) => {
-    // wallet page shows its own login gate (DashboardShell → LoginPage) — no kyb guard needed
-    if (page === "wallet") {
-      setPage("wallet");
-      return;
-    }
-    // command & studio still require KYB completion
-    if ((page === "command" || page === "studio") && !kybCompleted) {
-      setPage("command");
-    } else {
-      setPage(page);
-    }
+    setPage(page);
   };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-[#0A0A0A] border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between px-4 md:px-6">
-      {/* Left: Logo */}
-      <div className="flex items-center gap-3">
-        <div className="w-7 h-7 bg-[#00FF41] rounded-sm flex items-center justify-center">
-          <Shield className="w-4 h-4 text-[#050505]" />
+      {/* Left: Logo + Title (clickable → home) */}
+      <button
+        onClick={() => setPage("landing")}
+        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+      >
+        <div className="w-7 h-7 rounded-full overflow-hidden border border-[rgba(0,212,170,0.3)]">
+          <img
+            src="/logo-atlas-core.png"
+            alt="Atlas Core"
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
         </div>
         <span className="font-mono-data text-[11px] md:text-xs tracking-[0.2em] text-[#00FF41] glow-green font-bold hidden sm:block">
-          ATLAS GLOBAL CORE
+          {t('nav.atlasGlobalCore')}
         </span>
-      </div>
+      </button>
 
       {/* Center: Navigation */}
       <div className="flex items-center gap-1 md:gap-2">
-        {navItems.map(({ label, icon: Icon, page }) => {
+        {navItems.map(({ labelKey, icon: Icon, page }) => {
           const isActive = currentPage === page;
           return (
             <motion.button
@@ -81,7 +81,7 @@ export function Navbar() {
               whileTap={{ scale: 0.98 }}
             >
               <Icon className="w-3.5 h-3.5" />
-              <span>{label}</span>
+              <span>{t(labelKey)}</span>
               {isActive && (
                 <motion.div
                   layoutId="nav-underline"
@@ -101,7 +101,7 @@ export function Navbar() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00FF41] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00FF41]"></span>
           </span>
-          SYSTEM ONLINE
+          {t('nav.systemOnline')}
         </div>
 
         {/* Language Switcher */}
