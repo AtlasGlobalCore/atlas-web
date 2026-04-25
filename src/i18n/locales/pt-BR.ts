@@ -1,6 +1,6 @@
 export default {
   "nav": {
-    "wallet": "> CARTEIRA",
+    "wallet": "CARTEIRA",
     "exchange": "CÂMBIO",
     "pricing": "PREÇOS",
     "services": "SERVIÇOS",

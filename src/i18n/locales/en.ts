@@ -1,6 +1,6 @@
 export default {
   "nav": {
-    "wallet": "> WALLET",
+    "wallet": "WALLET",
     "exchange": "EXCHANGE",
     "pricing": "PRICING",
     "services": "SERVICES",

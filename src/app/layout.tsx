@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Providers } from "@/components/providers";
 
 const siteUrl = "https://atlasglobal.digital";
 
@@ -93,8 +94,10 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#050505" />
       </head>
       <body className="antialiased bg-obsidian text-steel-silver font-sans min-h-screen">
-        {children}
-        <Toaster />
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

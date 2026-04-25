@@ -1,6 +1,6 @@
 export default {
   "nav": {
-    "wallet": "> PORTEFEUILLE",
+    "wallet": "PORTEFEUILLE",
     "exchange": "CHANGE",
     "pricing": "TARIFS",
     "services": "SERVICES",
