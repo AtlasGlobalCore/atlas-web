@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuthStore, IS_DEV_MODE } from '@/lib/auth-store';
 import { Eye, EyeOff, Loader2, Lock, Mail, Terminal, User } from 'lucide-react';
 import { Logo3D } from '@/components/ui/logo-3d';
-import LoginGridBackground from './login-grid-background';
+import { LoginGridBackground } from './login-grid-background';
 
 /* ─── Login / Register Page ─── */
 export default function LoginPage() {
